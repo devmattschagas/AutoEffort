@@ -18,7 +18,11 @@ AutoEffort starts from a simple premise: hard tasks need more reasoning, while e
 
 AutoEffort uses **Jev**, through the TypeSafe SDK and OpenRouter, to select a reasoning-effort level based on the context you provide. It is intended to be exposed as a tool in Hermes or other agent harnesses, or called directly from your Python programs.
 
-The goal is to help you use reasoning effort more efficiently. Actual savings depend on your tasks, model, and integration.
+This is a simple classifier: it passes the supplied context and `reasoning_types` to Jev and returns the selected label. It does not discover which efforts the target model supports, validate compatibility, or configure that model.
+
+**Obtain the supported reasoning-effort values from the target model’s capabilities or documentation and supply them through `reasoning_types`. The built-in `low`, `medium`, and `high` values are only “dumb” presets: they are not a universal standard or a guarantee that a request will work.**
+
+The goal is to help you use reasoning effort more efficiently. Correct selections, compatibility, and token or cost savings are not guaranteed.
 
 ## Download
 
@@ -72,7 +76,12 @@ Keep `autoeffort.py` alongside your Python script, or otherwise make it importab
 ```python
 from autoeffort import AutoEffort
 
+# Populate this mapping using efforts supported by your target model.
+# Replace the placeholder below before making a real call.
+model_efforts = {"<supported-effort>": "When Jev should select this effort"}
+
 result = AutoEffort(
+    reasoning_types=model_efforts,
     messages=[
         {"role": "user", "content": "Help me diagnose this circuit."}
     ],
@@ -84,7 +93,9 @@ print(result)
 
 Context is supplied as keyword arguments. You can include messages, the current goal, the task, and other information Jev needs to make the decision. That context is sent to the external API.
 
-### Default effort levels
+### Built-in presets (not guaranteed to work)
+
+Omitting `reasoning_types` uses the following hard-coded labels and rough criteria. They are placeholders for a basic example, not capabilities obtained from your target model. The included greeting example also uses these presets.
 
 | Effort | Default criterion |
 | --- | --- |
@@ -92,9 +103,11 @@ Context is supplied as keyword arguments. You can include messages, the current 
 | `medium` | Simple tasks and short to long conversations |
 | `high` | Tasks that need reasoning |
 
-### Custom effort levels
+### Supply the target model’s supported efforts
 
-Pass `reasoning_types` to define the levels supported by your target model and the criteria for choosing each one:
+First obtain the accepted effort values for the model and provider you will actually call. Then pass those exact values as the keys of `reasoning_types`, with your selection criteria as the values. AutoEffort does not perform this lookup for you.
+
+The following example is applicable **only if you have verified that your target model accepts `low`, `medium`, and `high`**. Otherwise replace the keys with its supported values:
 
 ```python
 result = AutoEffort(
@@ -112,11 +125,13 @@ result = AutoEffort(
 
 ## Tool results
 
-Successful calls return a dictionary such as:
+A successful classifier call returns a dictionary such as:
 
 ```json
 {"status": "success", "reasoning": "low"}
 ```
+
+`status: "success"` means the classifier returned a choice. It does not mean the target model accepts that effort or that the subsequent model request will succeed.
 
 A missing API key returns:
 
@@ -128,7 +143,7 @@ Caught TypeSafe SDK errors also return `status: "error"`, with the SDK error typ
 
 ## Integration with Hermes and other harnesses
 
-Register `AutoEffort` through your harness's Python tool mechanism, or wrap it in the tool interface your harness expects. Provide the current messages and goal, then pass the returned dictionary back as the tool result.
+Register `AutoEffort` through your harness's Python tool mechanism, or wrap it in the tool interface your harness expects. Obtain the target model’s supported efforts and pass them as `reasoning_types` along with the current messages and goal, then pass the returned dictionary back as the tool result.
 
 On success, your integration applies the selected `reasoning` value to a subsequent LLM request, provided the target model supports it. On error, the agent or harness can decide how to continue based on `message`.
 
