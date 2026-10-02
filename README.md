@@ -26,16 +26,27 @@ The goal is to help you use reasoning effort more efficiently. Correct selection
 
 ## Download
 
-On this GitHub repository's page, select **Code → Download ZIP**, then extract the archive and open a terminal in the extracted folder.
-
-Alternatively, clone the repository using the HTTPS URL shown under **Code**:
+Clone the repository:
 
 ```bash
-git clone <repository-https-url>
+git clone https://github.com/devmattschagas/AutoEffort.git
 cd AutoEffort
 ```
 
-Replace `<repository-https-url>` with this repository's actual URL.
+Alternatively, on this GitHub repository's page select **Code → Download ZIP**, extract the archive, and open a terminal in the extracted folder.
+
+## Let your agent install it
+
+You do not have to run the commands below by hand. **Codex**, **Claude Code**, and **Hermes** can each do it in one pass. Paste this prompt:
+
+> Clone `https://github.com/devmattschagas/AutoEffort.git`, create a virtual environment inside the clone, install `requirements.txt` into it, then activate the environment and run `python autoeffort.py`, showing me the raw output. Do not edit any file in the repository.
+
+Two things to look for in what the agent reports back:
+
+- The raw output of the example must be `{'status': 'error', 'message': 'There is no API Key configured'}`. That is the correct result of a healthy install with no key set: the program failing loudly and legibly, not a broken installation. A traceback in place of that dictionary means something is wrong.
+- "Installed successfully" is not evidence on its own. Ask for the command output.
+
+The instruction not to edit the repository matters. `autoeffort.py` is self-contained, and an agent that decides to "fix" it will hand you back a file that no longer matches this documentation.
 
 ## Installation
 
